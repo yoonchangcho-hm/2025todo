@@ -162,17 +162,19 @@
 
       //modify
       btnMoElem.addEventListener('click', function () {
-        // alert('진짜 수정!');
-
         listView[inpNumElem.value].todo = inpElem.value;
 
-        //1 버튼이 입력으로 변경
+        // 입력 버튼 보이기, 수정/취소 버튼 숨기기
         btnElem.style.display = 'block';
         btnMoElem.style.display = 'none';
+        btnCancelElem.style.display = 'none'; // ← 이 줄을 추가하세요
+
         inpElem.value = '';
+        inpNumElem.value = '';
         saveData(); // 저장
         viewData();
       });
+
       btnCancelElem.addEventListener('click', function () {
         inpElem.value = '';
         inpNumElem.value = '';
