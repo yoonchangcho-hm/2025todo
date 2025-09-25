@@ -49,6 +49,12 @@
           <button class="btn btn-danger inpMoBtn" style="width: 100px">
             수정
           </button>
+          <button
+            class="btn btn-secondary inpCancelBtn"
+            style="width: 100px; display: none"
+          >
+            취소
+          </button>
         </div>
       </div>
       <div class="row px-3">
@@ -89,10 +95,10 @@
     ></script>
     <script>
       /*
-        1. 입력, 리스트, 체크, 수정, 삭제, 전체삭제 ->crud
-        2. 디자인 -> 선택자(dom) 찾기 -> 저장소(설계)/샘플데이터생성
+              1. 입력, 리스트, 체크, 수정, 삭제, 전체삭제 ->crud
+              2. 디자인 -> 선택자(dom) 찾기 -> 저장소(설계)/샘플데이터생성
 
-        */
+              */
 
       // let listView = [
       //     {
@@ -121,6 +127,25 @@
       const inpNumElem = document.querySelector('.numInp');
       const btnElem = document.querySelector('.inpBtn'); // event
       const btnMoElem = document.querySelector('.inpMoBtn'); // event
+      const btnCancelElem = document.querySelector('.inpCancelBtn');
+      const delAllBtn = document.querySelector('.delAll');
+
+      //전체삭제
+      delAllBtn.addEventListener('click', function () {
+        const beforeLength = listView.length;
+        const afterList = listView.filter((item) => item.done);
+
+        if (beforeLength === afterList.length) {
+          alert('삭제할 항목이 없습니다. 모든 항목이 완료되었습니다.');
+          return;
+        }
+
+        if (confirm('완료되지 않은 항목을 모두 삭제하시겠습니까?')) {
+          listView = afterList;
+          saveData();
+          viewData();
+        }
+      });
 
       //create
       btnElem.addEventListener('click', function () {
@@ -128,6 +153,7 @@
           let value = { todo: inpElem.value, done: false }; //초기값
           listView.push(value);
           inpElem.value = '';
+          saveData(); // 저장
           viewData();
         } else {
           alert('오늘의 할 일을 입력하세요');
@@ -144,18 +170,33 @@
         btnElem.style.display = 'block';
         btnMoElem.style.display = 'none';
         inpElem.value = '';
+        saveData(); // 저장
         viewData();
+      });
+      btnCancelElem.addEventListener('click', function () {
+        inpElem.value = '';
+        inpNumElem.value = '';
+        btnElem.style.display = 'block';
+        btnMoElem.style.display = 'none';
+        btnCancelElem.style.display = 'none';
       });
 
       //function
+
+      function saveData() {
+        localStorage.setItem('todoList', JSON.stringify(listView));
+      }
+
       //read
       function viewData() {
         let viewData = '';
         listView.forEach(function (item, i) {
-          viewData += `    
-                   <li class="d-flex justify-content-between py-3">
-                   <div>${item.todo}</div>
-                   <div class="d-flex gap-3">`;
+          viewData += `
+                         <li class="d-flex justify-content-between py-3">
+                         <div style="text-decoration: ${
+                           item.done ? 'line-through' : 'none'
+                         }">${item.todo}</div>
+                         <div class="d-flex gap-3">`;
 
           // if(item.done){
           //   viewData += `<i class="fa-solid fa-square-check" onclick="noDone(${i})"></i>`;
@@ -168,12 +209,12 @@
             viewData += `<i class="fa-solid fa-square" onclick="done(${i})"></i>`;
           }
 
-          viewData += `  
-                        <i class="fa-solid fa-pen" onclick="modi(${i},'${listView[i].todo}')"></i>
-                        <i class="fa-solid fa-trash" onclick="del(${i})"></i>
-                    </div>
-                    </li>
-                `;
+          viewData += `
+                              <i class="fa-solid fa-pen" onclick="modi(${i},'${listView[i].todo}')"></i>
+                              <i class="fa-solid fa-trash" onclick="del(${i})"></i>
+                          </div>
+                          </li>
+                      `;
         });
         viewDataElem.innerHTML = viewData;
       }
@@ -186,6 +227,15 @@
           listView.splice(index, 1);
           viewData();
         }
+      }
+      function del(index) {
+        if (listView[index].done) {
+          alert('완료된 항목은 삭제할 수 없습니다.');
+          return;
+        }
+        listView.splice(index, 1);
+        saveData(); // 저장
+        viewData();
       }
 
       //done
@@ -202,25 +252,44 @@
 
       function done(index) {
         listView[index].done = !listView[index].done;
+        if (!listView[index].done) {
+          alert('할 일이 다시 활성화되었습니다.');
+        }
+        saveData(); // 저장
         viewData();
       }
 
+      //modi
+
       function modi(index, todo) {
-        // alert('수정' + todo);
+        if (listView[index].done) {
+          alert('완료된 항목은 수정할 수 없습니다.');
+          return;
+        }
         inpElem.value = todo;
         inpNumElem.value = index;
         btnElem.style.display = 'none';
         btnMoElem.style.display = 'block';
+        btnCancelElem.style.display = 'block'; // 취소 버튼 보이기
       }
 
+      function loadData() {
+        const data = localStorage.getItem('todoList');
+        if (data) {
+          listView = JSON.parse(data);
+          viewData();
+        }
+      }
+      loadData();
+
       /*
-      개선방향
-      - done:true 이면 수정, 삭제금지
-      - done:true 이면 글자, 글자를 text-decoration:line-through
-      - done:false 원상복구
-      - 수정시 취소버튼 추가
-      - done 체크, todo title 수정, todo 삭제, 전체삭제, localStorage 반영
-      */
+            개선방향
+            - done:true 이면 수정, 삭제금지
+            - done:true 이면 글자, 글자를 text-decoration:line-through
+            - done:false 원상복구
+            - 수정시 취소버튼 추가
+            - done 체크, todo title 수정, todo 삭제, 전체삭제, localStorage 반영
+            */
     </script>
   </body>
 </html>
