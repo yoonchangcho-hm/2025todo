@@ -182,7 +182,10 @@
 
       //delete
       function del(index) {
-        alert(index);
+        if (confirm('정말 삭제하시겠습니까?')) {
+          listView.splice(index, 1);
+          viewData();
+        }
       }
 
       //done
